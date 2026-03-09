@@ -1,0 +1,17 @@
+	Framework Prompt: 
+I'm going to build a new web app to play an rpg game that mixes the visual novel genre of games with different arcade and 'classic' style of games (as minigames that are initiated by certain decisions in the game)--and want you to framework ideas. Keep it javascript-based! Gimme 5 options
+
+	Framework Response: 
+If I were building your idea:
+React + Phaser hybrid
+because it cleanly separates:
+
+Narrative Engine (React)
+Minigames (Phaser)
+Game State (store)
+
+This also lets you scale to:
+* save systems
+* RPG stats
+* inventory
+* branching story trees
