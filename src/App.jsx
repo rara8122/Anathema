@@ -32,23 +32,25 @@ const START_NODE = 'start';
 
 function App() {
   const [currentNodeId, setCurrentNodeId] = useState(START_NODE);
-  const [pendingNextNodeId, setPendingNextNodeId] = useState(null);
+  const [pendingMinigameChoice, setPendingMinigameChoice] = useState(null);
   const [isMinigameRunning, setIsMinigameRunning] = useState(false);
   const [lastMinigameResult, setLastMinigameResult] = useState(null);
 
   const currentNode = chapter1[currentNodeId];
   const pendingRef = useRef(null);
-  pendingRef.current = pendingNextNodeId;
+  pendingRef.current = pendingMinigameChoice;
 
-  // Subscribe once to minigame completion. When Phaser finishes, we receive the result here.
+  // Subscribe once to minigame completion. Pick success or fail node based on score threshold.
   useEffect(() => {
     const unsub = gameEngine.onMinigameComplete((result) => {
       setIsMinigameRunning(false);
       setLastMinigameResult(result);
-      const next = pendingRef.current;
-      if (next) {
-        setCurrentNodeId(next);
-        setPendingNextNodeId(null);
+      const choice = pendingRef.current;
+      if (choice) {
+        const threshold = choice.minigameSuccessThreshold ?? 0;
+        const nextNode = result.score >= threshold ? choice.next : choice.failNext;
+        if (nextNode) setCurrentNodeId(nextNode);
+        setPendingMinigameChoice(null);
       }
     });
     return unsub;
@@ -56,7 +58,7 @@ function App() {
 
   const handleChoiceSelected = (choice) => {
     if (choice.action === 'minigame') {
-      setPendingNextNodeId(choice.next);
+      setPendingMinigameChoice(choice);
       setIsMinigameRunning(true);
       gameEngine.startMinigame('click');
     } else if (choice.next) {

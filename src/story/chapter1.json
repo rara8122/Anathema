@@ -1,29 +1,64 @@
 {
   "start": {
-    "text": "You walk into the arcade.",
+    "text": "You wake up to loud crashing. Looking downstairs, you see your father fighting members of the local church-affiliated guard. From the limited conversation you can hear, they are here for you.",
     "choices": [
       {
-        "text": "Play the machine",
-        "action": "minigame",
-        "next": "after_minigame"
+        "text": "Save your father",
+        "next": "save_father"
       },
       {
-        "text": "Leave",
-        "next": "leave_arcade"
+        "text": "Escape out the window",
+        "next": "escape"
       }
     ]
   },
-  "after_minigame": {
-    "text": "You finish playing. Score: {score}. The machine spits out a ticket. Not bad!",
+  "save_father": {
+    "text": "You race downstairs to save your father. Quickly, you are faced with the opportunity to grab a decorative sword which may better aid the coming battle, but will likely be destroyed in combat.",
     "choices": [
       {
-        "text": "Leave the arcade",
-        "next": "leave_arcade"
+        "text": "Grab the sword",
+        "action": "minigame",
+        "next": "chapter_end_sword",
+        "failNext": "chapter_fail_sword",
+        "minigameSuccessThreshold": 10
+      },
+      {
+        "text": "Do not grab the sword",
+        "action": "minigame",
+        "next": "chapter_end_no_sword",
+        "failNext": "chapter_fail_no_sword",
+        "minigameSuccessThreshold": 15
       }
     ]
   },
-  "leave_arcade": {
-    "text": "You decide to leave. The neon lights fade behind you.",
+  "chapter_end_sword": {
+    "text": "You finish off the last of your opponents as your sword snaps, useless. Your father turns to you and reminds you where he told you to go if this ever happened.",
+    "choices": [
+      {
+        "text": "Run to safety",
+        "next": "escape"
+      }
+    ]
+  },
+  "chapter_end_no_sword": {
+    "text": "You finish off the last of your opponents. Your father turns to you and reminds you where he told you to go if this ever happened.",
+    "choices": [
+      {
+        "text": "Run to safety",
+        "next": "escape"
+      }
+    ]
+  },
+  "chapter_fail_sword": {
+    "text": "You were overwhelmed. The guards subdue you before you can turn the tide.",
+    "choices": []
+  },
+  "chapter_fail_no_sword": {
+    "text": "You were overwhelmed. The guards subdue you before you can turn the tide.",
+    "choices": []
+  },
+  "escape": {
+    "text": "You run into the woods, headed towards an old friend—a magic user and follower of the 'old religion' known as an 'anathema'—who you know can teach you to better defend yourself if these guards ever come back.",
     "choices": []
   }
 }
