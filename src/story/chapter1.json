@@ -1,0 +1,29 @@
+{
+  "start": {
+    "text": "You walk into the arcade.",
+    "choices": [
+      {
+        "text": "Play the machine",
+        "action": "minigame",
+        "next": "after_minigame"
+      },
+      {
+        "text": "Leave",
+        "next": "leave_arcade"
+      }
+    ]
+  },
+  "after_minigame": {
+    "text": "You finish playing. Score: {score}. The machine spits out a ticket. Not bad!",
+    "choices": [
+      {
+        "text": "Leave the arcade",
+        "next": "leave_arcade"
+      }
+    ]
+  },
+  "leave_arcade": {
+    "text": "You decide to leave. The neon lights fade behind you.",
+    "choices": []
+  }
+}
