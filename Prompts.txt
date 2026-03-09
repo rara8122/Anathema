@@ -101,3 +101,14 @@ If the player chooses "Grab the sword", play the minigame. If they get a score o
 If the player chooses "Do not grab the sword", play the minigame. If they get a score of 15 or higher, the following text appears as the chapter ends: "You finish off the last of your opponents. Your father turns to you and reminds you where he told you to go if this ever happened." The player is given one option: "run to safety", which initiates the 'escape' event described below:
 
 Escape event: This is initiated if the player chooses "Escape out the window" or "run to safety". both result in the following text: "You run into the woods, headed towards an old friend—a magic user and follower of the 'old religion' known as an 'anathema'—who you know can teach you to better defend yourself if these guards ever come back.
+
+	Reset button prompt:
+Can you add a reset button every time the game ends without an option?
+
+	context file prompt:
+Scan the repo and generate a project_context.md file so I can resume this project later.
+Include:
+- architecture
+- important files
+- current progress
+- next steps

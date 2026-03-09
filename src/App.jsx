@@ -66,7 +66,14 @@ function App() {
     }
   };
 
+  const handleReset = () => {
+    setCurrentNodeId(START_NODE);
+    setLastMinigameResult(null);
+    setPendingMinigameChoice(null);
+  };
+
   // Interpolate {score} in text if we have a recent minigame result
+  const hasNoChoices = !currentNode?.choices || currentNode.choices.length === 0;
   const displayText = (() => {
     let t = currentNode?.text ?? '';
     if (lastMinigameResult?.score != null && t.includes('{score}')) {
@@ -87,6 +94,11 @@ function App() {
             onSelect={handleChoiceSelected}
             disabled={false}
           />
+          {hasNoChoices && (
+            <button type="button" className="btn btn-ghost" onClick={handleReset}>
+              Reset
+            </button>
+          )}
           <HUD lastMinigameResult={lastMinigameResult} currentNodeId={currentNodeId} />
         </div>
       </div>
