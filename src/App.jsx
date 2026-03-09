@@ -1,4 +1,26 @@
-import React, { useEffect, useMemo, useState } from 'react';
+/**
+ * App - Main React shell for the hybrid VN RPG.
+ *
+ * FLOW: React loads story → DialogueBox shows text → ChoiceMenu shows choices.
+ *
+ * When player picks a NORMAL choice (has "next"):
+ *   → setCurrentNodeId(choice.next)
+ *
+ * When player picks a MINIGAME choice (has "action": "minigame"):
+ *   → setPendingNextNodeId(choice.next)  // where to go after minigame
+ *   → setIsMinigameRunning(true)
+ *   → gameEngine.startMinigame("click")  // React calls GameEngine; never touches Phaser
+ *
+ * Phaser runs the click minigame. When it ends, the scene emits "minigameComplete".
+ * GameEngine forwards this to our onMinigameComplete subscription:
+ *   → setIsMinigameRunning(false)
+ *   → setLastMinigameResult(result)
+ *   → setCurrentNodeId(pendingNextNodeId)  // continue the story
+ *
+ * The canvas is shown in the center when isMinigameRunning; otherwise we show dialogue UI.
+ */
+
+import React, { useEffect, useRef, useState } from 'react';
 import DialogueBox from './ui/DialogueBox.jsx';
 import ChoiceMenu from './ui/ChoiceMenu.jsx';
 import HUD from './ui/HUD.jsx';
@@ -6,134 +28,73 @@ import GameCanvas from './game/GameCanvas.jsx';
 import { gameEngine } from './game/GameEngine.js';
 import chapter1 from './story/chapter1.json';
 
-// High-level React shell for the hybrid VN RPG.
-// - React owns "story state" (current node, last minigame result, flags).
-// - React never touches Phaser directly; it only talks to the GameEngine facade.
-// - GameEngine forwards "start minigame" into Phaser, and forwards
-//   "minigame completed" events back to React.
+const START_NODE = 'start';
 
 function App() {
-  const [currentNodeId, setCurrentNodeId] = useState('intro');
+  const [currentNodeId, setCurrentNodeId] = useState(START_NODE);
   const [pendingNextNodeId, setPendingNextNodeId] = useState(null);
   const [isMinigameRunning, setIsMinigameRunning] = useState(false);
   const [lastMinigameResult, setLastMinigameResult] = useState(null);
 
-  const nodesById = useMemo(() => {
-    const map = {};
-    for (const node of chapter1.nodes) {
-      map[node.id] = node;
-    }
-    return map;
-  }, []);
+  const currentNode = chapter1[currentNodeId];
+  const pendingRef = useRef(null);
+  pendingRef.current = pendingNextNodeId;
 
-  const currentNode = nodesById[currentNodeId];
-
+  // Subscribe once to minigame completion. When Phaser finishes, we receive the result here.
   useEffect(() => {
-    // Subscribe once to gameEngine minigame completion events.
-    const unsubscribe = gameEngine.onMinigameComplete((result) => {
+    const unsub = gameEngine.onMinigameComplete((result) => {
       setIsMinigameRunning(false);
       setLastMinigameResult(result);
-
-      // If we were waiting to advance the story after a minigame, do it now.
-      if (pendingNextNodeId) {
-        setCurrentNodeId(pendingNextNodeId);
+      const next = pendingRef.current;
+      if (next) {
+        setCurrentNodeId(next);
         setPendingNextNodeId(null);
       }
     });
-
-    return () => {
-      unsubscribe();
-    };
-  }, [pendingNextNodeId]);
+    return unsub;
+  }, []);
 
   const handleChoiceSelected = (choice) => {
-    // A choice can advance the VN directly, or request a minigame.
-    if (choice.minigame) {
-      // Flag that we will move to choice.next once the minigame completes.
+    if (choice.action === 'minigame') {
       setPendingNextNodeId(choice.next);
       setIsMinigameRunning(true);
-
-      // Imperative edge of React: call into the GameEngine.
-      // React still does not touch any Phaser APIs here.
-      gameEngine.startMinigame(choice.minigame, { sourceChoiceId: choice.id });
+      gameEngine.startMinigame('click');
     } else if (choice.next) {
       setCurrentNodeId(choice.next);
     }
   };
 
-  const handleQuickStartMinigame = () => {
-    // Convenience button to start the example minigame without going through
-    // the narrative choice flow, useful during early development.
-    setIsMinigameRunning(true);
-    setPendingNextNodeId(null);
-    gameEngine.startMinigame('click', { source: 'debug-button' });
-  };
+  // Interpolate {score} in text if we have a recent minigame result
+  const displayText = (() => {
+    let t = currentNode?.text ?? '';
+    if (lastMinigameResult?.score != null && t.includes('{score}')) {
+      t = t.replace('{score}', String(lastMinigameResult.score));
+    }
+    return t;
+  })();
 
   return (
     <div className="app-root">
-      <div className="app-column">
+      {/* Dialogue UI: visible when NOT in minigame. */}
+      <div className={`app-dialogue-view ${isMinigameRunning ? 'app-dialogue-view--hidden' : ''}`}>
         <div className="vn-panel">
-          <div>
-            <div className="vn-title">Anathema · VN RPG Starter</div>
-            <div className="vn-subtitle">
-              React drives the story. Phaser runs the arcade scenes.
-            </div>
-          </div>
-
-          <DialogueBox
-            speaker={currentNode?.speaker}
-            text={currentNode?.text}
-          />
-
+          <div className="vn-title">Anathema</div>
+          <DialogueBox text={displayText} />
           <ChoiceMenu
             choices={currentNode?.choices ?? []}
             onSelect={handleChoiceSelected}
-            disabled={isMinigameRunning}
+            disabled={false}
           />
-
-          <div className="vn-footer">
-            <div className="choices-row">
-              <button
-                className="btn btn-ghost"
-                onClick={handleQuickStartMinigame}
-                disabled={isMinigameRunning}
-              >
-                Start Example Minigame
-              </button>
-            </div>
-
-            <div className="choices-row">
-              <span
-                className={
-                  'status-pill ' +
-                  (isMinigameRunning ? 'status-pill--active' : '')
-                }
-              >
-                {isMinigameRunning ? 'Minigame: Running in Phaser' : 'Minigame: Idle'}
-              </span>
-            </div>
-          </div>
-
           <HUD lastMinigameResult={lastMinigameResult} currentNodeId={currentNodeId} />
         </div>
       </div>
 
-      <div className="app-column">
-        <div className="hud-panel" style={{ marginBottom: 8 }}>
-          <div className="hud-row">
-            <span className="hud-label">Phaser GameCanvas</span>
-            <span className="hud-value">
-              React owns this DOM node, GameEngine owns everything inside the canvas.
-            </span>
-          </div>
-        </div>
-        <div className="game-canvas-container">
-          <GameCanvas />
-        </div>
+      {/* Phaser canvas: centered when minigame running, hidden otherwise. */}
+      <div className={`game-canvas-container game-canvas-container--center ${isMinigameRunning ? '' : 'game-canvas-container--hidden'}`}>
+        <GameCanvas />
       </div>
     </div>
   );
 }
 
 export default App;
-

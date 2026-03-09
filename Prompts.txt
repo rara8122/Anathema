@@ -1,17 +1,103 @@
 	Framework Prompt: 
 I'm going to build a new web app to play an rpg game that mixes the visual novel genre of games with different arcade and 'classic' style of games (as minigames that are initiated by certain decisions in the game)--and want you to framework ideas. Keep it javascript-based! Gimme 5 options
 
-	Framework Response: 
-If I were building your idea:
-React + Phaser hybrid
-because it cleanly separates:
+	First Playable Loop Prompt: 
+Implement the first playable vertical slice of this game.
 
-Narrative Engine (React)
-Minigames (Phaser)
-Game State (store)
+Goal: Create a simple playable loop where the player reads dialogue, makes a choice, plays a minigame, and then returns to the story.
 
-This also lets you scale to:
-* save systems
-* RPG stats
-* inventory
-* branching story trees
+Requirements:
+
+Story:
+
+Load story data from a JSON file in /story/chapter1.json.
+
+The story should contain dialogue nodes and choices.
+
+Each node should have text and optional choices.
+
+Example format:
+
+{
+"start": {
+"text": "You walk into the arcade.",
+"choices": [
+{
+"text": "Play the machine",
+"action": "minigame"
+},
+{
+"text": "Leave",
+"next": "leave_arcade"
+}
+]
+},
+
+"leave_arcade": {
+"text": "You decide to leave.",
+"choices": []
+}
+}
+
+Gameplay behavior:
+
+React loads the starting node.
+
+DialogueBox displays the text.
+
+ChoiceMenu displays buttons for choices.
+
+If the player chooses a normal branch, move to the next node.
+
+If the player chooses a minigame action:
+
+Call GameEngine.startMinigame("click")
+
+Show the Phaser canvas.
+
+The Phaser minigame should be a simple click game:
+
+Player clicks a target multiple times within a few seconds.
+
+When the minigame ends:
+
+Return a score result to React.
+
+Hide the Phaser canvas.
+
+Continue the story.
+
+Architecture rules:
+
+React controls story flow.
+
+Phaser only handles gameplay.
+
+Communication should go through GameEngine methods or events.
+
+Do not directly manipulate Phaser objects from React.
+
+UI behavior:
+
+Dialogue appears above the choices.
+
+When a minigame starts, the canvas appears in the center of the screen.
+
+After the minigame ends, return to the dialogue UI.
+
+Add comments explaining how the React UI triggers the minigame and receives the result.
+
+	Edit chapter one with my story: 
+Edit chapter one with the following storyline: 
+
+Start with the text: "You wake up to loud crashing. Looking downstairs, you see your father fighting members of the local church-affiliated guard. From the limited  conversation you can hear, they are here for you."
+
+This text comes with the following choices: "Save your father" and "Escape out the window"
+
+"Save your father" will result in the following text: "You race downstairs to save your father. Quickly, you are faced with  the opportunity to grab a decorative sword which may better aid the coming battle, but will likely be destroyed in combat" and the options "Grab the sword" and "Do not grab the sword"
+
+If the player chooses "Grab the sword", play the minigame. If they get a score of 10 or higher, the following text appears as the chapter ends: "You finish off the last of your opponents as your sword snaps, useless. Your father turns to you and reminds you where he told you to go if this ever happened." The player is given one option: "run to safety", which initiates the 'escape' event described below:
+
+If the player chooses "Do not grab the sword", play the minigame. If they get a score of 15 or higher, the following text appears as the chapter ends: "You finish off the last of your opponents. Your father turns to you and reminds you where he told you to go if this ever happened." The player is given one option: "run to safety", which initiates the 'escape' event described below:
+
+Escape event: This is initiated if the player chooses "Escape out the window" or "run to safety". both result in the following text: "You run into the woods, headed towards an old friend—a magic user and follower of the 'old religion' known as an 'anathema'—who you know can teach you to better defend yourself if these guards ever come back.
